@@ -46,6 +46,7 @@ void Init_TestProb_ELBDM_Perturbation();
 void Init_TestProb_ELBDM_HaloMerger();
 void Init_TestProb_ELBDM_DiskHeating();
 void Init_TestProb_ELBDM_UniformGranule();
+void Init_TestProb_ELBDM_StreamHeatingUniformGranule();
 
 
 
