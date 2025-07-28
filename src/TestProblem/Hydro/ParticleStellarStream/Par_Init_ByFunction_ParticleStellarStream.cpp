@@ -8,10 +8,19 @@
 
 extern int    ParStream_NPar[3];
 extern double ParStream_Point_Mass;
-extern double ParStream_Par_Sep;
 extern bool   ParStream_Use_Massive;
 
 
+#include <cstdlib>
+#include <cmath>
+
+// Simple Gaussian random number generator using Box-Muller transform
+double rand_normal(double mean, double stddev) {
+    const double u1 = rand() / (RAND_MAX + 1.0);
+    const double u2 = rand() / (RAND_MAX + 1.0);
+    const double z0 = sqrt(-2.0 * log(u1)) * cos(2 * M_PI * u2);
+    return z0 * stddev + mean;
+}
 
 
 //-------------------------------------------------------------------------------------------------------
@@ -65,18 +74,14 @@ void Par_Init_ByFunction_ParticleStellarStream( const long NPar_ThisRank, const 
 
    if ( MPI_Rank == 0 )    Aux_Message( stdout, "%s ...\n", __FUNCTION__ );
 
-   const int Stream_Nx = 100;
-   const int Stream_Nz = 10;
-   const int NStream   = Stream_Nx * Stream_Nz;
-   long NPar_All       = NStream;
+   const long NPar_All = 10000;  // or any large number you want
 
 if ( NPar_All != NPar_AllRank )
     Aux_Error( ERROR_INFO, "total number of particles found [%ld] != expect [%ld] !!\n",
                NPar_All, NPar_AllRank );
 
-   if ( NPar_All != NPar_AllRank )
-      Aux_Error( ERROR_INFO, "total number of particles found [%ld] != expect [%ld] !!\n",
-                 NPar_All, NPar_AllRank );
+   srand(314); // or use time(NULL) for non-deterministic
+
 
 // define the particle attribute arrays
    real_par *ParFltData_AllRank[PAR_NATT_FLT_TOTAL];
@@ -102,11 +107,9 @@ if ( NPar_All != NPar_AllRank )
 
       if ( ParStream_Use_Massive ) {
 
-         const double Stream_Length    = 100.0;  // kpc along X
-         const double Stream_Thickness = 20.0;   // kpc in Z
-         const double Stream_Height    = 20.0;   // kpc in Y
-
-         const double dx = Stream_Length / Stream_Nx;
+         const double Stream_Length    = 10.0;  // kpc along X
+         const double Stream_Thickness = 2.0;   // kpc in Z
+         const double Stream_Height    = 2.0;   // kpc in Y
 
          const double x0 = 0.5 * amr->BoxSize[0] - 0.5 * Stream_Length;
          const double y0 = 0.5 * amr->BoxSize[1];
@@ -124,48 +127,32 @@ if ( NPar_All != NPar_AllRank )
          gsl_rng_set(rng, 314); // fixed seed
          #endif
 
-         for (int ix = 0; ix < Stream_Nx; ix++)
-         for (int iz = 0; iz < Stream_Nz; iz++) {
-            const double x_kpc = x0 + (ix + 0.5) * dx;
+         for (long p = 0; p < NPar_All; p++) {
 
-            #ifdef SUPPORT_GSL
-            const double dy = gsl_ran_gaussian(rng, Stream_Height / 2.0);
-            const double dz = gsl_ran_gaussian(rng, Stream_Thickness / 2.0);
-            const double dVx = gsl_ran_gaussian(rng, VelDisp);
-            const double dVy = gsl_ran_gaussian(rng, VelDisp);
-            const double dVz = gsl_ran_gaussian(rng, VelDisp);
-            #else
-            const double dy = 0.0;
-            const double dz = 0.0;
-            const double dVx = 0.0;
-            const double dVy = 0.0;
-            const double dVz = 0.0;
-            #endif
+            const double x = x0 + ((double)rand() / RAND_MAX) * Stream_Length;
+            const double y = rand_normal(y0, 0.5 * Stream_Height);     // thin in Y
+            const double z = rand_normal(z0, 0.5 * Stream_Thickness);  // thin in Z
 
-            ParFltData_AllRank[PAR_MASS][p]  = 0.0;  // massless to avoid gravity
-            ParFltData_AllRank[PAR_POSX][p]  = real_par(x_kpc);
-            ParFltData_AllRank[PAR_POSY][p]  = real_par(y0 + dy);
-            ParFltData_AllRank[PAR_POSZ][p]  = real_par(z0 + dz);
+            const double vx = rand_normal(BulkVelX, VelDisp);
+            const double vy = rand_normal(0.0, VelDisp);
+            const double vz = rand_normal(0.0, VelDisp);
 
-            ParFltData_AllRank[PAR_VELX][p]  = real_par(BulkVelX + dVx);
-            ParFltData_AllRank[PAR_VELY][p]  = real_par(dVy);
-            ParFltData_AllRank[PAR_VELZ][p]  = real_par(dVz);
+            ParFltData_AllRank[PAR_MASS][p] = 0.0;
+            ParFltData_AllRank[PAR_POSX][p] = real_par(x);
+            ParFltData_AllRank[PAR_POSY][p] = real_par(y);
+            ParFltData_AllRank[PAR_POSZ][p] = real_par(z);
+
+            ParFltData_AllRank[PAR_VELX][p] = real_par(vx);
+            ParFltData_AllRank[PAR_VELY][p] = real_par(vy);
+            ParFltData_AllRank[PAR_VELZ][p] = real_par(vz);
 
             ParIntData_AllRank[PAR_TYPE][p] = PTYPE_GENERIC_MASSIVE;
-
-            p++;
          }
 
          #ifdef SUPPORT_GSL
          gsl_rng_free(rng);
          #endif
       }
- // if ( ParStream_Use_Massive )
-   // Free RNG
-   #ifdef SUPPORT_GSL
-   gsl_rng_free(rng);
-   #endif
-
    } // if ( MPI_Rank == 0 )
 
 // send particle attributes from the master rank to all ranks

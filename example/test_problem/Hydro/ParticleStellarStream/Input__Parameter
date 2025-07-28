@@ -15,25 +15,27 @@
 
 
 # simulation scale
-BOX_SIZE                      1.0         # box size along the longest side (in Mpc/h if COMOVING is adopted)
+BOX_SIZE                      100.0         # box size along the longest side (in Mpc/h if COMOVING is adopted)
 NX0_TOT_X                     32          # number of base-level cells along x
 NX0_TOT_Y                     32          # number of base-level cells along y
 NX0_TOT_Z                     32          # number of base-level cells along z
 OMP_NTHREAD                  -1           # number of OpenMP threads (<=0=auto) [-1] ##OPENMP ONLY##
-END_T                        -1           # end physical time (<0=auto -> must be set by test problems or restart) [-1.0]
+END_T                         1           # end physical time (<0=auto -> must be set by test problems or restart) [-1.0]
 END_STEP                     -1           # end step (<0=auto -> must be set by test problems or restart) [-1]
 
 
 # test problems
 TESTPROB_ID                   102          # test problem ID [0]
-                                          #   102: HYDRO Particle Stellar Stream (+PARTICLE)
+                                          #   18: HYDRO Particle Test (+TRACER & PARTICLE)
 
 
 # code units (in cgs)
 OPT__UNIT                     1           # specify code units -> must set exactly 3 basic units below [0] ##USELESS FOR COMOVING##
-UNIT_L                        1.0         # length unit        (<=0 -> set to UNIT_V*UNIT_T or (UNIT_M/UNIT_D)^(1/3)) [1.0]
-UNIT_M                        1.0         # mass unit          (<=0 -> set to UNIT_D*UNIT_L^3)                        [1.0]
-UNIT_T                        1.0         # time unit          (<=0 -> set to UNIT_L/UNIT_V)                          [1.0]
+UNIT_L            3.0856800e+21           # length unit        (<=0 -> set to UNIT_V*UNIT_T or (UNIT_M/UNIT_D)^(1/3)) [-1.0]
+UNIT_M            1.9890000e+43           # mass unit          (<=0 -> set to UNIT_D*UNIT_L^3)                        [-1.0]
+UNIT_T                       -1.0         # time unit          (<=0 -> set to UNIT_L/UNIT_V)                          [-1.0]
+UNIT_V            1.0000000e+05           # velocity unit      (<=0 -> set to UNIT_L/UNIT_T)                          [-1.0]
+UNIT_D                       -1.0         # mass density unit  (<=0 -> set to UNIT_M/UNIT_L^3)                        [-1.0]
 
 # boundary conditions
 OPT__BC_FLU_XM                1           # fluid boundary condition at the -x face: (1=periodic, 2=outflow, 3=reflecting, 4=user, 5=diode)
@@ -44,7 +46,7 @@ OPT__BC_FLU_ZM                1           # fluid boundary condition at the -z f
 OPT__BC_FLU_ZP                1           # fluid boundary condition at the +z face: (1=periodic, 2=outflow, 3=reflecting, 4=user, 5=diode)
 
 # particle (PARTICLE only)
-PAR_NPAR                     -1           # total number of particles (must be set for PAR_INIT == 1/3)
+PAR_NPAR                      10000           # total number of particles (must be set for PAR_INIT == 1/3)
 PAR_INIT                      1           # initialization option for particles: (1=FUNCTION, 2=RESTART, 3=FILE->"PAR_IC")
 PAR_INTERP                    2           # particle interpolation scheme: (1=NGP, 2=CIC, 3=TSC) [2]
 PAR_INTEG                     2           # particle integration scheme: (1=Euler, 2=KDK) [2]
@@ -188,7 +190,7 @@ OPT__OUTPUT_TOTAL             1           # output the simulation snapshot: (0=o
 OPT__OUTPUT_PART              0           # output a single line or slice: (0=off, 1=xy, 2=yz, 3=xz, 4=x, 5=y, 6=z, 7=diag, 8=entire box) [0]
 OPT__OUTPUT_USER              0           # output the user-specified data -> edit "Output_User.cpp" [0]
 OPT__OUTPUT_PAR_MODE          0           # output the particle data: (0=off, 1=text-file, 2=C-binary) [0] ##PARTICLE ONLY##
-OPT__OUTPUT_PAR_MESH          1           # output the attributes of tracer particles mapped from mesh quantities -> edit "Input__Par_Mesh" [1] ##PARTICLE ONLY##
+OPT__OUTPUT_PAR_MESH          0           # output the attributes of tracer particles mapped from mesh quantities -> edit "Input__Par_Mesh" [1] ##PARTICLE ONLY##
 OPT__OUTPUT_BASEPS            0           # output the base-level power spectrum [0]
 OPT__OUTPUT_BASE              0           # only output the base-level data [0] ##OPT__OUTPUT_PART ONLY##
 OPT__OUTPUT_POT               1           # output gravitational potential [1] ##OPT__OUTPUT_TOTAL ONLY##
@@ -203,7 +205,7 @@ OPT__OUTPUT_DIVMAG            0           # output |divergence(B)*dh/|B|| [0] ##
 OPT__OUTPUT_USER_FIELD        0           # output user-defined derived fields [0] -> edit "Flu_DerivedField_User.cpp"
 OPT__OUTPUT_MODE              2           # (1=const step, 2=const dt, 3=dump table) -> edit "Input__DumpTable" for 3
 OUTPUT_STEP                   5           # output data every OUTPUT_STEP step ##OPT__OUTPUT_MODE==1 ONLY##
-OUTPUT_DT                  100.0          # output data every OUTPUT_DT time interval ##OPT__OUTPUT_MODE==2 ONLY##
+OUTPUT_DT                    5.0e-3          # output data every OUTPUT_DT time interval ##OPT__OUTPUT_MODE==2 ONLY##
 OUTPUT_PART_X                0.5          # x coordinate for OPT__OUTPUT_PART [-1.0]
 OUTPUT_PART_Y                0.5          # y coordinate for OPT__OUTPUT_PART [-1.0]
 OUTPUT_PART_Z                0.5          # z coordinate for OPT__OUTPUT_PART [-1.0]

@@ -9,7 +9,6 @@ static double ParStream_Pres_Bg;        // background pressure
 static double ParStream_Ang_Freq;       // gas angular frequency
        int    ParStream_NPar[3];        // particles on a side
        double ParStream_Point_Mass;     // the mass of the active particles
-       double ParStream_Par_Sep;        // the separation between the active particles
        bool   ParStream_Use_Tracers;    // whether or not to include tracers
        bool   ParStream_Use_Massive;    // whether or not to include massive particles
 
@@ -108,10 +107,6 @@ void LoadInputTestProb( const LoadParaMode_t load_mode, ReadPara_t *ReadPara, HD
    LOAD_PARA( load_mode, "ParStream_Dens_Bg",     &ParStream_Dens_Bg,        1.0e-2,       Eps_double,       NoMax_double      );
    LOAD_PARA( load_mode, "ParStream_Pres_Bg",     &ParStream_Pres_Bg,        1.0e-2,       Eps_double,       NoMax_double      );
    LOAD_PARA( load_mode, "ParStream_Ang_Freq",    &ParStream_Ang_Freq,       0.00051668,   Eps_double,       1.0e-3            );
-   LOAD_PARA( load_mode, "ParStream_NParX",       &ParStream_NPar[0],        32,           2,                128               );
-   LOAD_PARA( load_mode, "ParStream_NParY",       &ParStream_NPar[1],        32,           2,                128               );
-   LOAD_PARA( load_mode, "ParStream_NParZ",       &ParStream_NPar[2],        32,           2,                128               );
-   LOAD_PARA( load_mode, "ParStream_Par_Sep",     &ParStream_Par_Sep,        0.5,          Eps_double,       NoMax_double      );
    LOAD_PARA( load_mode, "ParStream_Point_Mass",  &ParStream_Point_Mass,     1.0,          Eps_double,       NoMax_double      );
    LOAD_PARA( load_mode, "ParStream_Use_Tracers", &ParStream_Use_Tracers,    true,         Useless_bool,     Useless_bool      );
    LOAD_PARA( load_mode, "ParStream_Use_Massive", &ParStream_Use_Massive,    true,         Useless_bool,     Useless_bool      );
@@ -185,8 +180,7 @@ void SetParameter()
 // overwrite the total number of particles
 #  ifdef PARTICLE
    amr->Par->NPar_Active_AllRank = 0;
-   if ( ParStream_Use_Massive )    amr->Par->NPar_Active_AllRank += 2;
-   if ( ParStream_Use_Tracers )    amr->Par->NPar_Active_AllRank += ParStream_NPar[0]*ParStream_NPar[1]*ParStream_NPar[2];
+   if ( ParStream_Use_Massive )    amr->Par->NPar_Active_AllRank += 10000;
    PRINT_RESET_PARA( amr->Par->NPar_Active_AllRank, FORMAT_LONG, "(PAR_NPAR in Input__Parameter)" );
 #  endif
 
@@ -202,7 +196,6 @@ void SetParameter()
       Aux_Message( stdout, "  number of particles (x)    = %d\n",     ParStream_NPar[0]     );
       Aux_Message( stdout, "                      (y)    = %d\n",     ParStream_NPar[1]     );
       Aux_Message( stdout, "                      (z)    = %d\n",     ParStream_NPar[2]     );
-      Aux_Message( stdout, "  active particle separation = %13.7e\n", ParStream_Par_Sep     );
       Aux_Message( stdout, "  active particle mass       = %13.7e\n", ParStream_Point_Mass  );
       Aux_Message( stdout, "  include tracer particles   = %d\n",     ParStream_Use_Tracers );
       Aux_Message( stdout, "  include massive particles  = %d\n",     ParStream_Use_Massive );
@@ -324,22 +317,21 @@ void Init_TestProb_Hydro_ParticleStellarStream()
 
 
 bool Flag_ParticleStellarStream( const int i, const int j, const int k, const int lv,
-                        const int PID, const double *Threshold )
+                                  const int PID, const double *Threshold )
 {
+    const double dh     = amr->dh[lv];
+    const double Pos[3] = { amr->patch[0][lv][PID]->EdgeL[0] + (i+0.5)*dh,
+                            amr->patch[0][lv][PID]->EdgeL[1] + (j+0.5)*dh,
+                            amr->patch[0][lv][PID]->EdgeL[2] + (k+0.5)*dh };
 
-   // Refine a rectanglar solid region in the center just to test behavior in
-   // non-uniform regions
+    const double MidY = 0.5 * amr->BoxSize[1];
+    const double MidZ = 0.5 * amr->BoxSize[2];
 
-   const double dh     = amr->dh[lv];                                                  // grid size
-   const double Pos[3] = { amr->patch[0][lv][PID]->EdgeL[0] + (i+0.5)*dh,              // x,y,z position
-                           amr->patch[0][lv][PID]->EdgeL[1] + (j+0.5)*dh,
-                           amr->patch[0][lv][PID]->EdgeL[2] + (k+0.5)*dh  };
+    const double dy = Pos[1] - MidY;
+    const double dz = Pos[2] - MidZ;
 
-   const double Center[3] = { 0.5*amr->BoxSize[0], 0.5*amr->BoxSize[1], 0.5*amr->BoxSize[2] };
-   const double dr[3]     = { Pos[0]-Center[0], Pos[1]-Center[1], Pos[2]-Center[2] };
+    // Allow full extent in X, thin in Y and Z
+    bool Flag = (FABS(dy) < 0.25) && (FABS(dz) < 0.25);
 
-   bool Flag = (FABS(dr[0]) < Threshold[0]) && (FABS(dr[1]) < 2.0*Threshold[0]) && (FABS(dr[2]) < Threshold[0]);
-
-   return Flag;
-
+    return Flag;
 }
