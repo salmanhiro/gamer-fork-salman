@@ -25,8 +25,8 @@ END_STEP                     -1           # end step (<0=auto -> must be set by 
 
 
 # test problems
-TESTPROB_ID                   18          # test problem ID [0]
-                                          #   18: HYDRO Particle Test (+TRACER & PARTICLE)
+TESTPROB_ID                   102          # test problem ID [0]
+                                          #   102: HYDRO Particle Stellar Stream (+PARTICLE)
 
 
 # code units (in cgs)

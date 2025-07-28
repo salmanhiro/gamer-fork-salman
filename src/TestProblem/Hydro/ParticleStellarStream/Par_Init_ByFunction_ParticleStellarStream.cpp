@@ -99,29 +99,69 @@ void Par_Init_ByFunction_ParticleStellarStream( const long NPar_ThisRank, const 
 
       if ( ParStream_Use_Massive ) {
 
-         const double v = 0.5*SQRT(Const_NewtonG*ParStream_Point_Mass/(0.5*ParStream_Par_Sep));
+         const int    Stream_Nx        = ParStream_NPar[0];
+         const int    Stream_Nz        = ParStream_NPar[2];
+         const int    NStream          = Stream_Nx * Stream_Nz;
 
-         for (int ii=0; ii<2; ii++) {
+         const double Stream_Length    = 100.0;  // kpc along X
+         const double Stream_Thickness = 20.0;   // kpc in Z
+         const double Stream_Height    = 20.0;   // kpc in Y
 
-            const double dir = 2.0*ii-1.0;
+         const double dx = Stream_Length / Stream_Nx;
 
-            ParFltData_AllRank[PAR_MASS][p] = real_par( ParStream_Point_Mass );
+         const double x0 = 0.5 * amr->BoxSize[0] - 0.5 * Stream_Length;
+         const double y0 = 0.5 * amr->BoxSize[1];
+         const double z0 = 0.5 * amr->BoxSize[2];
 
-            ParFltData_AllRank[PAR_POSX][p] = real_par( 0.5*amr->BoxSize[0] +
-                 0.5*ParStream_Par_Sep*dir );
-            ParFltData_AllRank[PAR_POSY][p] = real_par( 0.5*amr->BoxSize[1] );
-            ParFltData_AllRank[PAR_POSZ][p] = real_par( 0.5*amr->BoxSize[2] );
+         const double BulkVelX = 150.0;     // km/s
+         const double VelDisp  = 1.0;       // km/s
 
-            ParFltData_AllRank[PAR_VELX][p] = (real_par)0.0;
-            ParFltData_AllRank[PAR_VELY][p] = real_par( v*dir );
-            ParFltData_AllRank[PAR_VELZ][p] = (real_par)0.0;
+         #ifdef SUPPORT_GSL
+         const gsl_rng_type *T;
+         gsl_rng *rng;
+         gsl_rng_env_setup();
+         T   = gsl_rng_default;
+         rng = gsl_rng_alloc(T);
+         gsl_rng_set(rng, 314); // fixed seed
+         #endif
 
-//          set the particle type to be generic massive
+         for (int ix = 0; ix < Stream_Nx; ix++)
+         for (int iz = 0; iz < Stream_Nz; iz++) {
+            const double x_kpc = x0 + (ix + 0.5) * dx;
+
+            #ifdef SUPPORT_GSL
+            const double dy = gsl_ran_gaussian(rng, Stream_Height / 2.0);
+            const double dz = gsl_ran_gaussian(rng, Stream_Thickness / 2.0);
+            const double dVx = gsl_ran_gaussian(rng, VelDisp);
+            const double dVy = gsl_ran_gaussian(rng, VelDisp);
+            const double dVz = gsl_ran_gaussian(rng, VelDisp);
+            #else
+            const double dy = 0.0;
+            const double dz = 0.0;
+            const double dVx = 0.0;
+            const double dVy = 0.0;
+            const double dVz = 0.0;
+            #endif
+
+            ParFltData_AllRank[PAR_MASS][p]  = 0.0;  // massless to avoid gravity
+            ParFltData_AllRank[PAR_POSX][p]  = real_par(x_kpc);
+            ParFltData_AllRank[PAR_POSY][p]  = real_par(y0 + dy);
+            ParFltData_AllRank[PAR_POSZ][p]  = real_par(z0 + dz);
+
+            ParFltData_AllRank[PAR_VELX][p]  = real_par(BulkVelX + dVx);
+            ParFltData_AllRank[PAR_VELY][p]  = real_par(dVy);
+            ParFltData_AllRank[PAR_VELZ][p]  = real_par(dVz);
+
             ParIntData_AllRank[PAR_TYPE][p] = PTYPE_GENERIC_MASSIVE;
 
             p++;
          }
-      } // if ( ParStream_Use_Massive )
+
+         #ifdef SUPPORT_GSL
+         gsl_rng_free(rng);
+         #endif
+      }
+ // if ( ParStream_Use_Massive )
 
       if ( ParStream_Use_Tracers ) {
 
@@ -212,7 +252,7 @@ void Par_Init_ByFunction_ParticleStellarStream( const long NPar_ThisRank, const 
 
    if ( MPI_Rank == 0 )    Aux_Message( stdout, "%s ... done\n", __FUNCTION__ );
 
-} // FUNCTION : Par_Init_ByFunction_ParticleStellarStream
+} // FUNCTION : Par_Init_ByFunction_Particle
 
 
 
