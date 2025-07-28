@@ -67,7 +67,7 @@ void Validate()
 
 #  ifdef PARTICLE
 // TODO: Enable particle
-   Aux_Error( ERROR_INFO, "COMOVING must be disabled !!\n" );
+   Aux_Error( ERROR_INFO, "PARTICLE must be disabled !!\n" );
 #  endif
 
 #  if ( NCOMP_PASSIVE_USER != 1 )
