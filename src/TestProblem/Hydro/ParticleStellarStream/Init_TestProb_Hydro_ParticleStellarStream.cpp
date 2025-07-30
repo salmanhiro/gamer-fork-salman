@@ -7,7 +7,7 @@
 static double ParStream_Dens_Bg;        // background mass density
 static double ParStream_Pres_Bg;        // background pressure
 static double ParStream_Ang_Freq;       // gas angular frequency
-       int    ParStream_NPar[3];        // particles on a side
+       int    ParStream_NStar;           // number of star particle
        double ParStream_Point_Mass;     // the mass of the active particles
        bool   ParStream_Use_Tracers;    // whether or not to include tracers
        bool   ParStream_Use_Massive;    // whether or not to include massive particles
@@ -107,6 +107,7 @@ void LoadInputTestProb( const LoadParaMode_t load_mode, ReadPara_t *ReadPara, HD
    LOAD_PARA( load_mode, "ParStream_Dens_Bg",     &ParStream_Dens_Bg,        1.0e-2,       Eps_double,       NoMax_double      );
    LOAD_PARA( load_mode, "ParStream_Pres_Bg",     &ParStream_Pres_Bg,        1.0e-2,       Eps_double,       NoMax_double      );
    LOAD_PARA( load_mode, "ParStream_Ang_Freq",    &ParStream_Ang_Freq,       0.00051668,   Eps_double,       1.0e-3            );
+   LOAD_PARA( load_mode, "ParStream_NStar",       &ParStream_NStar,          1000,          1,                100000               );   
    LOAD_PARA( load_mode, "ParStream_Point_Mass",  &ParStream_Point_Mass,     1.0,          Eps_double,       NoMax_double      );
    LOAD_PARA( load_mode, "ParStream_Use_Tracers", &ParStream_Use_Tracers,    true,         Useless_bool,     Useless_bool      );
    LOAD_PARA( load_mode, "ParStream_Use_Massive", &ParStream_Use_Massive,    true,         Useless_bool,     Useless_bool      );
@@ -180,7 +181,7 @@ void SetParameter()
 // overwrite the total number of particles
 #  ifdef PARTICLE
    amr->Par->NPar_Active_AllRank = 0;
-   if ( ParStream_Use_Massive )    amr->Par->NPar_Active_AllRank += 10000;
+   if ( ParStream_Use_Massive )    amr->Par->NPar_Active_AllRank += ParStream_NStar;
    PRINT_RESET_PARA( amr->Par->NPar_Active_AllRank, FORMAT_LONG, "(PAR_NPAR in Input__Parameter)" );
 #  endif
 
@@ -190,12 +191,10 @@ void SetParameter()
    {
       Aux_Message( stdout, "=============================================================================\n" );
       Aux_Message( stdout, "  test problem ID            = %d\n",     TESTPROB_ID         );
+      Aux_Message( stdout, "  total star particle number = %d\n",     amr->Par->NPar_Active_AllRank    );
       Aux_Message( stdout, "  background mass density    = %13.7e\n", ParStream_Dens_Bg     );
       Aux_Message( stdout, "  background pressure        = %13.7e\n", ParStream_Pres_Bg     );
       Aux_Message( stdout, "  angular frequency          = %13.7e\n", ParStream_Ang_Freq    );
-      Aux_Message( stdout, "  number of particles (x)    = %d\n",     ParStream_NPar[0]     );
-      Aux_Message( stdout, "                      (y)    = %d\n",     ParStream_NPar[1]     );
-      Aux_Message( stdout, "                      (z)    = %d\n",     ParStream_NPar[2]     );
       Aux_Message( stdout, "  active particle mass       = %13.7e\n", ParStream_Point_Mass  );
       Aux_Message( stdout, "  include tracer particles   = %d\n",     ParStream_Use_Tracers );
       Aux_Message( stdout, "  include massive particles  = %d\n",     ParStream_Use_Massive );

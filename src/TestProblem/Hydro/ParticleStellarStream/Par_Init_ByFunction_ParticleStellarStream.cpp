@@ -1,18 +1,14 @@
 #include "GAMER.h"
+#include <cstdlib>
+#include <cmath>
 
 #ifdef PARTICLE
 #ifdef SUPPORT_GSL
-#include <gsl/gsl_rng.h>
-#include <gsl/gsl_randist.h>
+   #include <gsl/gsl_rng.h>
+   #include <gsl/gsl_randist.h>
 #endif
 
-extern int    ParStream_NPar[3];
-extern double ParStream_Point_Mass;
 extern bool   ParStream_Use_Massive;
-
-
-#include <cstdlib>
-#include <cmath>
 
 // Simple Gaussian random number generator using Box-Muller transform
 double rand_normal(double mean, double stddev) {
@@ -74,12 +70,6 @@ void Par_Init_ByFunction_ParticleStellarStream( const long NPar_ThisRank, const 
 
    if ( MPI_Rank == 0 )    Aux_Message( stdout, "%s ...\n", __FUNCTION__ );
 
-   const long NPar_All = 10000;  // or any large number you want
-
-if ( NPar_All != NPar_AllRank )
-    Aux_Error( ERROR_INFO, "total number of particles found [%ld] != expect [%ld] !!\n",
-               NPar_All, NPar_AllRank );
-
    srand(314); // or use time(NULL) for non-deterministic
 
 
@@ -107,17 +97,19 @@ if ( NPar_All != NPar_AllRank )
 
       if ( ParStream_Use_Massive ) {
 
-         const double Stream_Length    = 10.0;  // kpc along X
-         const double Stream_Thickness = 2.0;   // kpc in Z
-         const double Stream_Height    = 2.0;   // kpc in Y
+         const double Stream_Length    = 50.0;  // kpc along X
+         const double Stream_Thickness = 4.0;   // kpc in Z
+         const double Stream_Height    = 4.0;   // kpc in Y
 
          const double x0 = 0.5 * amr->BoxSize[0] - 0.5 * Stream_Length;
          const double y0 = 0.5 * amr->BoxSize[1];
          const double z0 = 0.5 * amr->BoxSize[2];
 
-         const double BulkVelX = 150.0;     // km/s
-         const double VelDisp  = 1.0;       // km/s
-
+         const double BulkVelX = 150.0;  // km/s along stream
+         const double VelDispX = 50;
+         const double VelDispY = 50;
+         const double VelDispZ = 50;
+         
          #ifdef SUPPORT_GSL
          const gsl_rng_type *T;
          gsl_rng *rng;
@@ -127,27 +119,41 @@ if ( NPar_All != NPar_AllRank )
          gsl_rng_set(rng, 314); // fixed seed
          #endif
 
-         for (long p = 0; p < NPar_All; p++) {
+      for (long p = 0; p < NPar_AllRank; p++) {
 
-            const double x = x0 + ((double)rand() / RAND_MAX) * Stream_Length;
-            const double y = rand_normal(y0, 0.5 * Stream_Height);     // thin in Y
-            const double z = rand_normal(z0, 0.5 * Stream_Thickness);  // thin in Z
+            double x, y, z;
 
-            const double vx = rand_normal(BulkVelX, VelDisp);
-            const double vy = rand_normal(0.0, VelDisp);
-            const double vz = rand_normal(0.0, VelDisp);
+            do {
+               x = x0 + Stream_Length * (double)p / NPar_AllRank;  // uniform distribution along X
+               x += rand_normal(0.0, 0.5);  // optional noise around the streamline
 
-            ParFltData_AllRank[PAR_MASS][p] = 0.0;
-            ParFltData_AllRank[PAR_POSX][p] = real_par(x);
-            ParFltData_AllRank[PAR_POSY][p] = real_par(y);
-            ParFltData_AllRank[PAR_POSZ][p] = real_par(z);
+            } while ( x < 0.0 || x >= amr->BoxSize[0] );
 
-            ParFltData_AllRank[PAR_VELX][p] = real_par(vx);
-            ParFltData_AllRank[PAR_VELY][p] = real_par(vy);
-            ParFltData_AllRank[PAR_VELZ][p] = real_par(vz);
+            do {
+               y = rand_normal(y0, 0.5 * Stream_Height);
+            } while ( y < 0.0 || y >= amr->BoxSize[1] );
 
-            ParIntData_AllRank[PAR_TYPE][p] = PTYPE_GENERIC_MASSIVE;
-         }
+            do {
+               z = rand_normal(z0, 0.5 * Stream_Thickness);
+            } while ( z < 0.0 || z >= amr->BoxSize[2] );
+
+
+         // Velocities
+         const double vx = rand_normal(BulkVelX, VelDispX);
+         const double vy = rand_normal(0.0, VelDispY);
+         const double vz = rand_normal(0.0, VelDispZ);
+
+         ParFltData_AllRank[PAR_MASS][p] = 0.0;
+         ParFltData_AllRank[PAR_POSX][p] = real_par(x);
+         ParFltData_AllRank[PAR_POSY][p] = real_par(y);
+         ParFltData_AllRank[PAR_POSZ][p] = real_par(z);
+
+         ParFltData_AllRank[PAR_VELX][p] = real_par(vx);
+         ParFltData_AllRank[PAR_VELY][p] = real_par(vy);
+         ParFltData_AllRank[PAR_VELZ][p] = real_par(vz);
+
+         ParIntData_AllRank[PAR_TYPE][p] = PTYPE_GENERIC_MASSIVE;
+      }
 
          #ifdef SUPPORT_GSL
          gsl_rng_free(rng);
