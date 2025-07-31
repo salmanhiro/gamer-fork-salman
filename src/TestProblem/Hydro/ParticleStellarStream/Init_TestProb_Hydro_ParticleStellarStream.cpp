@@ -11,7 +11,8 @@ static double ParStream_Ang_Freq;       // gas angular frequency
        double ParStream_Point_Mass;     // the mass of the active particles
        bool   ParStream_Use_Tracers;    // whether or not to include tracers
        bool   ParStream_Use_Massive;    // whether or not to include massive particles
-
+       double ParStream_Sigma;          // 1D velocity dispersion in km/s
+       double ParStream_Width;          // width of stellar stream
 // =======================================================================================
 
 // problem-specific function prototypes
@@ -107,10 +108,12 @@ void LoadInputTestProb( const LoadParaMode_t load_mode, ReadPara_t *ReadPara, HD
    LOAD_PARA( load_mode, "ParStream_Dens_Bg",     &ParStream_Dens_Bg,        1.0e-2,       Eps_double,       NoMax_double      );
    LOAD_PARA( load_mode, "ParStream_Pres_Bg",     &ParStream_Pres_Bg,        1.0e-2,       Eps_double,       NoMax_double      );
    LOAD_PARA( load_mode, "ParStream_Ang_Freq",    &ParStream_Ang_Freq,       0.00051668,   Eps_double,       1.0e-3            );
-   LOAD_PARA( load_mode, "ParStream_NStar",       &ParStream_NStar,          1000,          1,                100000               );   
+   LOAD_PARA( load_mode, "ParStream_NStar",       &ParStream_NStar,          1000,          1,                100000           );   
    LOAD_PARA( load_mode, "ParStream_Point_Mass",  &ParStream_Point_Mass,     1.0,          Eps_double,       NoMax_double      );
    LOAD_PARA( load_mode, "ParStream_Use_Tracers", &ParStream_Use_Tracers,    true,         Useless_bool,     Useless_bool      );
    LOAD_PARA( load_mode, "ParStream_Use_Massive", &ParStream_Use_Massive,    true,         Useless_bool,     Useless_bool      );
+   LOAD_PARA( load_mode, "ParStream_Sigma",      &ParStream_Sigma,           1.0,          Eps_double,       NoMax_double      );
+   LOAD_PARA( load_mode, "ParStream_Width",      &ParStream_Width,           1.0e-2,       Eps_double,       NoMax_double      );
 
 } // FUNCITON : LoadInputTestProb
 
@@ -197,7 +200,8 @@ void SetParameter()
       Aux_Message( stdout, "  angular frequency          = %13.7e\n", ParStream_Ang_Freq    );
       Aux_Message( stdout, "  active particle mass       = %13.7e\n", ParStream_Point_Mass  );
       Aux_Message( stdout, "  include tracer particles   = %d\n",     ParStream_Use_Tracers );
-      Aux_Message( stdout, "  include massive particles  = %d\n",     ParStream_Use_Massive );
+      Aux_Message( stdout, "  velocity dispersion        = %13.7e\n", ParStream_Sigma );
+      Aux_Message( stdout, "  stellar stream width       = %d\n",     ParStream_Width );
       Aux_Message( stdout, "=============================================================================\n" );
    }
 

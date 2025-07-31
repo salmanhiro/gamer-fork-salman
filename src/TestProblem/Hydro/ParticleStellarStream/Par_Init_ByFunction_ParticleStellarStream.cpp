@@ -9,6 +9,8 @@
 #endif
 
 extern bool   ParStream_Use_Massive;
+extern double  ParStream_Sigma;
+extern double  ParStream_Width;
 
 // Simple Gaussian random number generator using Box-Muller transform
 double rand_normal(double mean, double stddev) {
@@ -97,18 +99,15 @@ void Par_Init_ByFunction_ParticleStellarStream( const long NPar_ThisRank, const 
 
       if ( ParStream_Use_Massive ) {
 
-         const double Stream_Length    = 50.0;  // kpc along X
-         const double Stream_Thickness = 4.0;   // kpc in Z
-         const double Stream_Height    = 4.0;   // kpc in Y
+         const double Stream_Length    = amr->BoxSize[0];  // kpc along X
+         const double Stream_Thickness = ParStream_Width;   // kpc in Z
+         const double Stream_Height    = ParStream_Width;   // kpc in Y
 
          const double x0 = 0.5 * amr->BoxSize[0] - 0.5 * Stream_Length;
          const double y0 = 0.5 * amr->BoxSize[1];
          const double z0 = 0.5 * amr->BoxSize[2];
 
-         const double BulkVelX = 150.0;  // km/s along stream
-         const double VelDispX = 50;
-         const double VelDispY = 50;
-         const double VelDispZ = 50;
+         const double BulkVel = 150.0;  // km/s along stream
          
          #ifdef SUPPORT_GSL
          const gsl_rng_type *T;
@@ -139,9 +138,9 @@ void Par_Init_ByFunction_ParticleStellarStream( const long NPar_ThisRank, const 
 
 
          // Velocities
-         const double vx = rand_normal(BulkVelX, VelDispX);
-         const double vy = rand_normal(0.0, VelDispY);
-         const double vz = rand_normal(0.0, VelDispZ);
+         const double vx = rand_normal(BulkVel, ParStream_Sigma);
+         const double vy = rand_normal(0.0, ParStream_Sigma);
+         const double vz = rand_normal(0.0, ParStream_Sigma);
 
          ParFltData_AllRank[PAR_MASS][p] = 0.0;
          ParFltData_AllRank[PAR_POSX][p] = real_par(x);
