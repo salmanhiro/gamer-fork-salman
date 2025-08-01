@@ -126,7 +126,7 @@ void Par_Init_ByFunction_ParticleStellarStream( const long NPar_ThisRank, const 
 
             do {
                x = x0 + Stream_Length * (double)p / NPar_AllRank;  // uniform distribution along X
-               x += rand_normal(0.0, 0.5);  // optional noise around the streamline
+               x += rand_normal(0.0, 0.5);  // small noise around the streamline
 
             } while ( x < 0.0 || x >= amr->BoxSize[0] );
 
