@@ -1,0 +1,24 @@
+# Particle Stellar Stream Test Problem
+
+## Compilation Flags
+========================================
+Enable  : MODEL=HYDRO, PARTICLE, TRACER, GRAVITY,
+          SUPPORT_HDF5
+Disable : COMOVING
+
+## Default Setup
+========================================
+Simulates a simple stellar stream in a fixed halo potential. No mesh attributes or fluid-particle interpolation is involved. 
+1. Not using mesh and refinement, just particles.
+2. Massive particle enabled with massless property (mass can be enabled from `ParStream_Mass` in `Input__TestProb`)
+3. The stellar stream is assumed to move along the X-axis.
+4. The stream has a total width of 1 kpc in Y and Z and length of box length in X (default of 100 kpc).
+5. Bulk velocity dispersion is assigned in the X direction only, with magnitude 120 km/s.
+6. Velocity dispersion is isotropic with sigma = 1.0 km/s in all 3 dimensions by default.
+7. `PAR_NPAR` in `Input__Parameter` is set as stellar particles (default 1000)
+
+## Analysis
+========================================
+1. `plot_particles.py` to visualize the stellar stream evolution over time.
+2. `plot_density_profile.py` to visualize density of stream (should be similar along X axis)
+

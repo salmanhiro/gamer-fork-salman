@@ -118,13 +118,13 @@ void LoadInputTestProb( const LoadParaMode_t load_mode, ReadPara_t *ReadPara, HD
    LOAD_PARA( load_mode, "ParStream_Point_Mass",  &ParStream_Point_Mass,     1.0,          Eps_double,       NoMax_double      );
    LOAD_PARA( load_mode, "ParStream_Use_Tracers", &ParStream_Use_Tracers,    true,         Useless_bool,     Useless_bool      );
    LOAD_PARA( load_mode, "ParStream_Use_Massive", &ParStream_Use_Massive,    true,         Useless_bool,     Useless_bool      );
-   LOAD_PARA( load_mode, "ParStream_SigmaX",      &ParStream_SigmaX,         1.0,          0.0,              NoMax_double      );
-   LOAD_PARA( load_mode, "ParStream_SigmaY",      &ParStream_SigmaY,         1.0,          0.0,              NoMax_double      );
-   LOAD_PARA( load_mode, "ParStream_SigmaZ",      &ParStream_SigmaZ,         1.0,          0.0,              NoMax_double      );
-   LOAD_PARA( load_mode, "ParStream_Width",       &ParStream_Width,           1.0e-2,       Eps_double,       NoMax_double      );
-   LOAD_PARA( load_mode, "ParStream_BulkSigmaX",  &ParStream_BulkSigmaX,    120.0,        0.0,              NoMax_double      );
-   LOAD_PARA( load_mode, "ParStream_BulkSigmaY",  &ParStream_BulkSigmaY,    120.0,        0.0,              NoMax_double      );
-   LOAD_PARA( load_mode, "ParStream_BulkSigmaZ",  &ParStream_BulkSigmaZ,    120.0,        0.0,              NoMax_double      );
+   LOAD_PARA( load_mode, "ParStream_SigmaX",      &ParStream_SigmaX,         1.0,          0.0,       NoMax_double      );
+   LOAD_PARA( load_mode, "ParStream_SigmaY",      &ParStream_SigmaY,         1.0,          0.0,       NoMax_double      );
+   LOAD_PARA( load_mode, "ParStream_SigmaZ",      &ParStream_SigmaZ,         1.0,          0.0,       NoMax_double      );
+   LOAD_PARA( load_mode, "ParStream_Width",      &ParStream_Width,           1.0e-2,       Eps_double,       NoMax_double      );
+   LOAD_PARA( load_mode, "ParStream_BulkSigmaX",   &ParStream_BulkSigmaX,    120.0,        0.0,       NoMax_double      );
+   LOAD_PARA( load_mode, "ParStream_BulkSigmaY",   &ParStream_BulkSigmaY,    120.0,        0.0,       NoMax_double      );
+   LOAD_PARA( load_mode, "ParStream_BulkSigmaZ",   &ParStream_BulkSigmaZ,    120.0,        0.0,       NoMax_double      );
    LOAD_PARA( load_mode, "ParStream_Mass",        &ParStream_Mass,           0.0,          0.0,              NoMax_double      );
 
 

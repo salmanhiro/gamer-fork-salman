@@ -9,3 +9,4 @@ ParTest_NParY          32             # number of grid tracer particles along y-
 ParTest_NParZ          32             # number of grid tracer particles along z-axis [32]
 ParTest_Use_Tracers    1              # whether to use tracer particles [1]
 ParTest_Use_Massive    1              # whether to use massive particles [1]
+ParStream_NStar        1000           # number of star particles [1000]
