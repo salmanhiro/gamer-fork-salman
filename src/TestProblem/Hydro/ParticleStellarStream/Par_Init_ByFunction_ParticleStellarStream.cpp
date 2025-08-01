@@ -9,7 +9,12 @@
 #endif
 
 extern bool   ParStream_Use_Massive;
-extern double  ParStream_Sigma;
+extern double  ParStream_SigmaX;
+extern double  ParStream_SigmaY;
+extern double  ParStream_SigmaZ;
+extern double  ParStream_BulkSigmaX;
+extern double  ParStream_BulkSigmaY;
+extern double  ParStream_BulkSigmaZ;
 extern double  ParStream_Width;
 
 // Simple Gaussian random number generator using Box-Muller transform
@@ -103,11 +108,8 @@ void Par_Init_ByFunction_ParticleStellarStream( const long NPar_ThisRank, const 
          const double Stream_Thickness = ParStream_Width;   // kpc in Z
          const double Stream_Height    = ParStream_Width;   // kpc in Y
 
+         // stream is assumed in x diretion
          const double x0 = 0.5 * amr->BoxSize[0] - 0.5 * Stream_Length;
-         const double y0 = 0.5 * amr->BoxSize[1];
-         const double z0 = 0.5 * amr->BoxSize[2];
-
-         const double BulkVel = 150.0;  // km/s along stream
          
          #ifdef SUPPORT_GSL
          const gsl_rng_type *T;
@@ -129,19 +131,20 @@ void Par_Init_ByFunction_ParticleStellarStream( const long NPar_ThisRank, const 
             } while ( x < 0.0 || x >= amr->BoxSize[0] );
 
             do {
-               y = rand_normal(y0, 0.5 * Stream_Height);
+               y = rand_normal(y0, 0.5 * ParStream_Width);
             } while ( y < 0.0 || y >= amr->BoxSize[1] );
 
             do {
-               z = rand_normal(z0, 0.5 * Stream_Thickness);
+               z = rand_normal(z0, 0.5 * ParStream_Width);
             } while ( z < 0.0 || z >= amr->BoxSize[2] );
 
 
          // Velocities
-         const double vx = rand_normal(BulkVel, ParStream_Sigma);
-         const double vy = rand_normal(0.0, ParStream_Sigma);
-         const double vz = rand_normal(0.0, ParStream_Sigma);
+         const double vx = rand_normal(ParStream_BulkSigma, ParStream_SigmaX);
+         const double vy = rand_normal(0.0, ParStream_SigmaY);
+         const double vz = rand_normal(0.0, ParStream_SigmaZ);
 
+         // stream particles are assumed massless
          ParFltData_AllRank[PAR_MASS][p] = 0.0;
          ParFltData_AllRank[PAR_POSX][p] = real_par(x);
          ParFltData_AllRank[PAR_POSY][p] = real_par(y);
