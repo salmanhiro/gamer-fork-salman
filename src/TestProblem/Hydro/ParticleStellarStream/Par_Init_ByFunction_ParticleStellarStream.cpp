@@ -16,6 +16,7 @@ extern double  ParStream_BulkSigmaX;
 extern double  ParStream_BulkSigmaY;
 extern double  ParStream_BulkSigmaZ;
 extern double  ParStream_Width;
+extern double ParStream_Mass;
 
 // Simple Gaussian random number generator using Box-Muller transform
 double rand_normal(double mean, double stddev) {
@@ -145,7 +146,7 @@ void Par_Init_ByFunction_ParticleStellarStream( const long NPar_ThisRank, const 
          const double vz = rand_normal(0.0, ParStream_SigmaZ);
 
          // stream particles are assumed massless
-         ParFltData_AllRank[PAR_MASS][p] = 0.0;
+         ParFltData_AllRank[PAR_MASS][p] = ParStream_Mass;
          ParFltData_AllRank[PAR_POSX][p] = real_par(x);
          ParFltData_AllRank[PAR_POSY][p] = real_par(y);
          ParFltData_AllRank[PAR_POSZ][p] = real_par(z);
