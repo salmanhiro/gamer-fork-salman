@@ -105,11 +105,11 @@ void Par_Init_ByFunction_ParticleStellarStream( const long NPar_ThisRank, const 
       if ( ParStream_Use_Massive ) {
 
          const double Stream_Length    = amr->BoxSize[0];  // kpc along X
-         const double Stream_Thickness = ParStream_Width;   // kpc in Z
-         const double Stream_Height    = ParStream_Width;   // kpc in Y
 
          // stream is assumed in x diretion
          const double x0 = 0.5 * amr->BoxSize[0] - 0.5 * Stream_Length;
+         const double y0 = 0.5 * amr->BoxSize[1];
+         const double z0 = 0.5 * amr->BoxSize[2];
          
          #ifdef SUPPORT_GSL
          const gsl_rng_type *T;
@@ -140,7 +140,7 @@ void Par_Init_ByFunction_ParticleStellarStream( const long NPar_ThisRank, const 
 
 
          // Velocities
-         const double vx = rand_normal(ParStream_BulkSigma, ParStream_SigmaX);
+         const double vx = rand_normal(ParStream_BulkSigmaX, ParStream_SigmaX);
          const double vy = rand_normal(0.0, ParStream_SigmaY);
          const double vz = rand_normal(0.0, ParStream_SigmaZ);
 
