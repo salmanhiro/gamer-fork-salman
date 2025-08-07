@@ -45,6 +45,18 @@ OPT__BC_FLU_YP                1           # fluid boundary condition at the +y f
 OPT__BC_FLU_ZM                1           # fluid boundary condition at the -z face: (1=periodic, 2=outflow, 3=reflecting, 4=user, 5=diode)
 OPT__BC_FLU_ZP                1           # fluid boundary condition at the +z face: (1=periodic, 2=outflow, 3=reflecting, 4=user, 5=diode)
 
+# particle (PARTICLE only)
+PAR_NPAR                      1000
+PAR_INIT                      1           # initialization option for particles: (1=FUNCTION, 2=RESTART, 3=FILE->"PAR_IC")
+PAR_INTERP                    2           # particle interpolation scheme: (1=NGP, 2=CIC, 3=TSC) [2]
+PAR_INTEG                     2           # particle integration scheme: (1=Euler, 2=KDK) [2]
+PAR_TR_INTERP                 3           # tracer particle interpolation scheme: (1=NGP, 2=CIC, 3=TSC) [3]
+PAR_TR_INTEG                  2           # tracer particle integration scheme: (1=Euler, 2=RK2) [2]
+PAR_IMPROVE_ACC               1           # improve force accuracy at patch boundaries [1] ##STORE_POT_GHOST and PAR_INTERP=2/3 ONLY##
+PAR_PREDICT_POS               1           # predict particle position during mass assignment [1]
+PAR_REMOVE_CELL              -1.0         # remove particles X-root-cells from the boundaries (non-periodic BC only; <0=auto) [-1.0]
+PAR_TR_VEL_CORR               0           # correct tracer particle velocities in regions of discontinuous flow [0]
+
 # time-step
 DT__FLUID                    -1.0         # dt criterion: fluid solver CFL factor (<0=auto) [-1.0]
 DT__FLUID_INIT               -1.0         # dt criterion: DT__FLUID at the first step (<0=auto) [-1.0]

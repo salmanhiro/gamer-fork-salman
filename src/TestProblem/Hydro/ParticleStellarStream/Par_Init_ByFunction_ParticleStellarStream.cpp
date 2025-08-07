@@ -19,7 +19,7 @@ extern double  ParStream_Width;
 extern double ParStream_Mass;
 
 // Simple Gaussian random number generator using Box-Muller transform
-double rand_normal(double mean, double stddev) {
+double rand_normal_parpos(double mean, double stddev) {
     const double u1 = rand() / (RAND_MAX + 1.0);
     const double u2 = rand() / (RAND_MAX + 1.0);
     const double z0 = sqrt(-2.0 * log(u1)) * cos(2 * M_PI * u2);
@@ -127,23 +127,23 @@ void Par_Init_ByFunction_ParticleStellarStream( const long NPar_ThisRank, const 
 
             do {
                x = x0 + Stream_Length * (double)p / NPar_AllRank;  // uniform distribution along X
-               x += rand_normal(0.0, 0.5);  // small noise around the streamline
+               x += rand_normal_parpos(0.0, 0.5);  // small noise around the streamline
 
             } while ( x < 0.0 || x >= amr->BoxSize[0] );
 
             do {
-               y = rand_normal(y0, 0.5 * ParStream_Width);
+               y = rand_normal_parpos(y0, 0.5 * ParStream_Width);
             } while ( y < 0.0 || y >= amr->BoxSize[1] );
 
             do {
-               z = rand_normal(z0, 0.5 * ParStream_Width);
+               z = rand_normal_parpos(z0, 0.5 * ParStream_Width);
             } while ( z < 0.0 || z >= amr->BoxSize[2] );
 
 
          // Velocities
-         const double vx = rand_normal(ParStream_BulkSigmaX, ParStream_SigmaX);
-         const double vy = rand_normal(0.0, ParStream_SigmaY);
-         const double vz = rand_normal(0.0, ParStream_SigmaZ);
+         const double vx = rand_normal_parpos(ParStream_BulkSigmaX, ParStream_SigmaX);
+         const double vy = rand_normal_parpos(0.0, ParStream_SigmaY);
+         const double vz = rand_normal_parpos(0.0, ParStream_SigmaZ);
 
          // stream particles are assumed massless
          ParFltData_AllRank[PAR_MASS][p] = ParStream_Mass;
