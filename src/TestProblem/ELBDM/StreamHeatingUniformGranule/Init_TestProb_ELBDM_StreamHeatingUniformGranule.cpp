@@ -10,6 +10,7 @@ void Aux_ComputeCorrelation( Profile_t *Correlation[], const Profile_t *prof_ini
                              const bool RemoveEmpty, const long TVarBitIdx[], const int NProf, const int MinLv, const int MaxLv,
                              const PatchType_t PatchType, const double PrepTime, const double dr_min_prof );
 
+
 // problem-specific global variables
 // =======================================================================================
 static FieldIdx_t Idx_Dens0 = Idx_Undefined;  // field index for storing the **initial** density
@@ -32,9 +33,40 @@ static double   dr_min_corr;                  // bin size of correlation functio
 static bool     LogBin_corr;                  // logarithmic bin or not (correlation)
 static double   LogBinRatio_corr;             // ratio of adjacent log bins for logarithmic bin (correlation)
 static bool     RemoveEmpty_corr;             // remove bins without any samples; false: Data[empty_bin]=Weight[empty_bin]=NCell[empty_bin]=0 (correlation)
+static double ParticleStream_Dens_Bg;        // background mass density
+static double ParticleStream_Pres_Bg;        // background pressure
+static double ParticleStream_Ang_Freq;       // gas angular frequency
+
+       int    ParticleStream_NStar;           // number of star particle
+       double ParticleStream_Point_Mass;     // the mass of the active particles
+       bool   ParticleStream_Use_Tracers;    // whether or not to include tracers
+       bool   ParticleStream_Use_Massive;    // whether or not to include massive particles
+       double ParticleStream_SigmaX;          // 1D velocity dispersion of X component in km/s
+       double ParticleStream_SigmaY;          // 1D velocity dispersion of Y component in km/s
+       double ParticleStream_SigmaZ;          // 1D velocity dispersion of Z component in km/s
+       double ParticleStream_Width;          // width of stellar stream in kpc
+       double ParticleStream_BulkSigmaX;        // bulk velocity dispersion of X component in km/s
+       double ParticleStream_BulkSigmaY;        // bulk velocity dispersion of Y component in km/s
+       double ParticleStream_BulkSigmaZ;        // bulk velocity dispersion of Z component in km/s
+       double ParticleStream_Mass;             // stream particle mass (default 0)
 
 static Profile_t *Prof_Dens_initial = new Profile_t(); // pointer to save initial density profile
 static Profile_t *Correlation_Dens  = new Profile_t(); // pointer to save density correlation function
+
+// problem-specific function prototypes
+#ifdef PARTICLE
+void Par_Init_ByFunction_StreamHeatingUniformGranule( const long NPar_ThisRank, const long NPar_AllRank,
+                                       real_par *ParMass, real_par *ParPosX, real_par *ParPosY, real_par *ParPosZ,
+                                       real_par *ParVelX, real_par *ParVelY, real_par *ParVelZ, real_par *ParTime,
+                                       long_par *ParType, real_par *AllAttributeFlt[PAR_NATT_FLT_TOTAL],
+                                       long_par *AllAttributeInt[PAR_NATT_INT_TOTAL] );
+#endif
+
+bool Flag_StreamHeatingUniformGranule( const int i, const int j, const int k, const int lv,
+                        const int PID, const double *Threshold );
+
+// TODO: IMPLEMENT INIT PARTICLE
+
 // =======================================================================================
 
 //-------------------------------------------------------------------------------------------------------
@@ -61,14 +93,14 @@ void Validate()
    Aux_Error( ERROR_INFO, "GRAVITY must be enabled !!\n" );
 #  endif
 
+#  ifndef PARTICLE
+   Aux_Error( ERROR_INFO, "PARTICLE must be enabled !!\n" );
+#  endif
+
 #  ifdef COMOVING
    Aux_Error( ERROR_INFO, "COMOVING must be disabled !!\n" );
 #  endif
 
-#  ifdef PARTICLE
-// TODO: Enable particle
-   Aux_Error( ERROR_INFO, "PARTICLE must be disabled !!\n" );
-#  endif
 
 #  if ( NCOMP_PASSIVE_USER != 1 )
    Aux_Error( ERROR_INFO, "must set NCOMP_PASSIVE_USER to 1 !!\n" );
@@ -94,6 +126,62 @@ void Validate()
 
 
 #if ( MODEL == ELBDM  &&  defined GRAVITY )
+
+//-------------------------------------------------------------------------------------------------------
+// Function    :  LoadInputTestProb
+// Description :  Read problem-specific runtime parameters from Input__TestProb and store them in HDF5 snapshots (Data_*)
+//
+// Note        :  1. Invoked by SetParameter() to read parameters
+//                2. Invoked by Output_DumpData_Total_HDF5() using the function pointer Output_HDF5_InputTest_Ptr to store parameters
+//                3. If there is no problem-specific runtime parameter to load, add at least one parameter
+//                   to prevent an empty structure in HDF5_Output_t
+//                   --> Example:
+//                       LOAD_PARA( load_mode, "TestProb_ID", &TESTPROB_ID, TESTPROB_ID, TESTPROB_ID, TESTPROB_ID );
+//
+// Parameter   :  load_mode      : Mode for loading parameters
+//                                 --> LOAD_READPARA    : Read parameters from Input__TestProb
+//                                     LOAD_HDF5_OUTPUT : Store parameters in HDF5 snapshots
+//                ReadPara       : Data structure for reading parameters (used with LOAD_READPARA)
+//                HDF5_InputTest : Data structure for storing parameters in HDF5 snapshots (used with LOAD_HDF5_OUTPUT)
+//
+// Return      :  None
+//-------------------------------------------------------------------------------------------------------
+void LoadInputTestProb( const LoadParaMode_t load_mode, ReadPara_t *ReadPara, HDF5_Output_t *HDF5_InputTest )
+{
+
+#  ifndef SUPPORT_HDF5
+   if ( load_mode == LOAD_HDF5_OUTPUT )   Aux_Error( ERROR_INFO, "please turn on SUPPORT_HDF5 in the Makefile for load_mode == LOAD_HDF5_OUTPUT !!\n" );
+#  endif
+
+   if ( load_mode == LOAD_READPARA     &&  ReadPara       == NULL )   Aux_Error( ERROR_INFO, "load_mode == LOAD_READPARA and ReadPara == NULL !!\n" );
+   if ( load_mode == LOAD_HDF5_OUTPUT  &&  HDF5_InputTest == NULL )   Aux_Error( ERROR_INFO, "load_mode == LOAD_HDF5_OUTPUT and HDF5_InputTest == NULL !!\n" );
+
+// add parameters in the following format:
+// --> note that VARIABLE, DEFAULT, MIN, and MAX must have the same data type
+// --> some handy constants (e.g., NoMin_int, Eps_float, ...) are defined in "include/ReadPara.h"
+// --> LOAD_PARA() is defined in "include/TestProb.h"
+// **************************************************************************************************************************
+// LOAD_PARA( load_mode, "KEY_IN_THE_FILE",     &VARIABLE,               DEFAULT,      MIN,              MAX               );
+// **************************************************************************************************************************
+   LOAD_PARA( load_mode, "ParticleStream_Dens_Bg",     &ParticleStream_Dens_Bg,        1.0e-2,       Eps_double,       NoMax_double      );
+   LOAD_PARA( load_mode, "ParticleStream_Pres_Bg",     &ParticleStream_Pres_Bg,        1.0e-2,       Eps_double,       NoMax_double      );
+   LOAD_PARA( load_mode, "ParticleStream_Ang_Freq",    &ParticleStream_Ang_Freq,       0.00051668,   Eps_double,       1.0e-3            );
+   LOAD_PARA( load_mode, "ParticleStream_NStar",       &ParticleStream_NStar,          1000,         1,                100000           );   
+   LOAD_PARA( load_mode, "ParticleStream_Point_Mass",  &ParticleStream_Point_Mass,     1.0,          Eps_double,       NoMax_double      );
+   LOAD_PARA( load_mode, "ParticleStream_Use_Tracers", &ParticleStream_Use_Tracers,    true,         Useless_bool,     Useless_bool      );
+   LOAD_PARA( load_mode, "ParticleStream_Use_Massive", &ParticleStream_Use_Massive,    true,         Useless_bool,     Useless_bool      );
+   LOAD_PARA( load_mode, "ParticleStream_SigmaX",      &ParticleStream_SigmaX,         1.0,          0.0,       NoMax_double      );
+   LOAD_PARA( load_mode, "ParticleStream_SigmaY",      &ParticleStream_SigmaY,         1.0,          0.0,       NoMax_double      );
+   LOAD_PARA( load_mode, "ParticleStream_SigmaZ",      &ParticleStream_SigmaZ,         1.0,          0.0,       NoMax_double      );
+   LOAD_PARA( load_mode, "ParticleStream_Width",      &ParticleStream_Width,           1.0e-2,       Eps_double,       NoMax_double      );
+   LOAD_PARA( load_mode, "ParticleStream_BulkSigmaX",   &ParticleStream_BulkSigmaX,    120.0,        0.0,       NoMax_double      );
+   LOAD_PARA( load_mode, "ParticleStream_BulkSigmaY",   &ParticleStream_BulkSigmaY,    120.0,        0.0,       NoMax_double      );
+   LOAD_PARA( load_mode, "ParticleStream_BulkSigmaZ",   &ParticleStream_BulkSigmaZ,    120.0,        0.0,       NoMax_double      );
+   LOAD_PARA( load_mode, "ParticleStream_Mass",        &ParticleStream_Mass,           0.0,          0.0,              NoMax_double      );
+
+
+} // FUNCITON : LoadInputTestProb
+
 //-------------------------------------------------------------------------------------------------------
 // Function    :  SetParameter
 // Description :  Load and set the problem-specific runtime parameters
@@ -427,3 +515,23 @@ void Init_TestProb_ELBDM_StreamHeatingUniformGranule()
    if ( MPI_Rank == 0 )    Aux_Message( stdout, "%s ... done\n", __FUNCTION__ );
 
 } // FUNCTION : Init_TestProb_ELBDM_StreamHeatingUniformGranule
+
+bool Flag_StreamHeatingUniformGranule( const int i, const int j, const int k, const int lv,
+                                  const int PID, const double *Threshold )
+{
+    const double dh     = amr->dh[lv];
+    const double Pos[3] = { amr->patch[0][lv][PID]->EdgeL[0] + (i+0.5)*dh,
+                            amr->patch[0][lv][PID]->EdgeL[1] + (j+0.5)*dh,
+                            amr->patch[0][lv][PID]->EdgeL[2] + (k+0.5)*dh };
+
+    const double MidY = 0.5 * amr->BoxSize[1];
+    const double MidZ = 0.5 * amr->BoxSize[2];
+
+    const double dy = Pos[1] - MidY;
+    const double dz = Pos[2] - MidZ;
+
+    // Allow full extent in X, thin in Y and Z
+    bool Flag = (FABS(dy) < 0.25) && (FABS(dz) < 0.25);
+
+    return Flag;
+}
