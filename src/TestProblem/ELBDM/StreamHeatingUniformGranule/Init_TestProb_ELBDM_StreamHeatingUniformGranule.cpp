@@ -228,6 +228,11 @@ void SetParameter()
    ReadPara->Add( "LogBinRatio_corr",         &LogBinRatio_corr,        1.0,           NoMin_double,     NoMax_double      );
    ReadPara->Add( "RemoveEmpty_corr",         &RemoveEmpty_corr,        false,         Useless_bool,     Useless_bool      );
    ReadPara->Add( "dr_min_prof",              &dr_min_prof,             Eps_double,    NoMin_double,     NoMax_double      );
+   ReadPara->Add( "ParticleStream_Dens_Bg",   &ParticleStream_Dens_Bg,  Eps_double,    NoMin_double,     NoMax_double      );
+   ReadPara->Add( "ParticleStream_Pres_Bg",   &ParticleStream_Pres_Bg,  Eps_double,    NoMin_double,     NoMax_double      );
+   ReadPara->Add( "ParticleStream_Ang_Freq",   &ParticleStream_Ang_Freq,Eps_double,    NoMin_double,     NoMax_double      );
+   ReadPara->Add( "ParticleStream_NStar",   &ParticleStream_NStar,      1000,          0,                NoMax_int      );
+   ReadPara->Add( "ParticleStream_Point_Mass",   &ParticleStream_Point_Mass,      1000,          0,                NoMax_int      );
 
    ReadPara->Read( FileName );
 
@@ -302,6 +307,14 @@ void SetParameter()
          Aux_Message( stdout, "  remove empty bin    (profile, hard-coded)   = %d\n"    , RemoveEmpty_prof       );
          Aux_Message( stdout, "  minimum level                               = %d\n"    , MinLv_corr             );
          Aux_Message( stdout, "  maximum level                               = %d\n"    , MaxLv_corr             );
+         
+         Aux_Message( stdout, "  particle stream density bg                  = %13.7e\n"    , ParticleStream_Dens_Bg );
+         Aux_Message( stdout, "  particle stream pressure bg                 = %13.7e\n"    , ParticleStream_Pres_Bg );
+         Aux_Message( stdout, "  particle stream angular fq                  = %13.7e\n"    , ParticleStream_Ang_Freq);
+         Aux_Message( stdout, "  particle stream angular fq                  = %13.7e\n"    , ParticleStream_Ang_Freq);
+         Aux_Message( stdout, "  n star particle                             = %d\n"        , ParticleStream_NStar   );
+         
+         
          Aux_Message( stdout, "  folder for storing correlation text file    = %s\n"    , FilePath_corr          );
          if ( OPT__INIT == INIT_BY_RESTART )
          Aux_Message( stdout, "  re-compute correlation using restart time   = %d\n"    , ReComputeCorrelation   );
@@ -505,7 +518,7 @@ void Init_TestProb_ELBDM_StreamHeatingUniformGranule()
 #  if ( MODEL == ELBDM )
 // set the problem-specific runtime parameters
    SetParameter();
-
+   Par_Init_ByFunction_Ptr       = Par_Init_ByFunction_StreamHeatingUniformGranule;
    Init_Field_User_Ptr = AddNewField_ELBDM_UniformGranule;
    Init_User_Ptr       = Init_User_ELBDM_UniformGranule;
    Aux_Record_User_Ptr = Do_CF;

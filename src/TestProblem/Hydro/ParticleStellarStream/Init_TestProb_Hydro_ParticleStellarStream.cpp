@@ -8,7 +8,6 @@ static double ParStream_Dens_Bg;        // background mass density
 static double ParStream_Pres_Bg;        // background pressure
 static double ParStream_Ang_Freq;       // gas angular frequency
        int    ParStream_NStar;           // number of star particle
-       double ParStream_Point_Mass;     // the mass of the active particles
        bool   ParStream_Use_Tracers;    // whether or not to include tracers
        bool   ParStream_Use_Massive;    // whether or not to include massive particles
        double ParStream_SigmaX;          // 1D velocity dispersion of X component in km/s
