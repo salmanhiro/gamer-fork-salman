@@ -8,7 +8,6 @@ static double ParStream_Dens_Bg;        // background mass density
 static double ParStream_Pres_Bg;        // background pressure
 static double ParStream_Ang_Freq;       // gas angular frequency
        int    ParStream_NStar;           // number of star particle
-       bool   ParStream_Use_Tracers;    // whether or not to include tracers
        bool   ParStream_Use_Massive;    // whether or not to include massive particles
        double ParStream_SigmaX;          // 1D velocity dispersion of X component in km/s
        double ParStream_SigmaY;          // 1D velocity dispersion of Y component in km/s
@@ -115,7 +114,6 @@ void LoadInputTestProb( const LoadParaMode_t load_mode, ReadPara_t *ReadPara, HD
    LOAD_PARA( load_mode, "ParStream_Ang_Freq",    &ParStream_Ang_Freq,       0.00051668,   Eps_double,       1.0e-3            );
    LOAD_PARA( load_mode, "ParStream_NStar",       &ParStream_NStar,          1000,         1,                100000           );   
    LOAD_PARA( load_mode, "ParStream_Point_Mass",  &ParStream_Point_Mass,     1.0,          Eps_double,       NoMax_double      );
-   LOAD_PARA( load_mode, "ParStream_Use_Tracers", &ParStream_Use_Tracers,    true,         Useless_bool,     Useless_bool      );
    LOAD_PARA( load_mode, "ParStream_Use_Massive", &ParStream_Use_Massive,    true,         Useless_bool,     Useless_bool      );
    LOAD_PARA( load_mode, "ParStream_SigmaX",      &ParStream_SigmaX,         1.0,          0.0,       NoMax_double      );
    LOAD_PARA( load_mode, "ParStream_SigmaY",      &ParStream_SigmaY,         1.0,          0.0,       NoMax_double      );
@@ -165,13 +163,9 @@ void SetParameter()
 
 
 // (2) check the runtime parameters
-   if ( !ParStream_Use_Tracers  &&  !ParStream_Use_Massive )
+   if ( !ParStream_Use_Massive )
       Aux_Error( ERROR_INFO,
                  "either ParStream_Use_Tracer, ParStream_Use_Massive, or both must be true !!\n" );
-
-#  ifndef TRACER
-   if ( ParStream_Use_Tracers )    Aux_Error( ERROR_INFO, "must enable TRACER for ParStream_Use_Tracers !!\n" );
-#  endif
 
 #  ifndef GRAVITY
    if ( ParStream_Use_Massive )    Aux_Error( ERROR_INFO, "must enable GRAVITY for ParStream_Use_Massive !!\n" );
@@ -211,7 +205,6 @@ void SetParameter()
       Aux_Message( stdout, "  background pressure        = %13.7e\n", ParStream_Pres_Bg     );
       Aux_Message( stdout, "  angular frequency          = %13.7e\n", ParStream_Ang_Freq    );
       Aux_Message( stdout, "  active particle mass       = %13.7e\n", ParStream_Point_Mass  );
-      Aux_Message( stdout, "  include tracer particles   = %d\n",     ParStream_Use_Tracers );
       Aux_Message( stdout, "  x velocity dispersion      = %13.7e\n", ParStream_SigmaX );
       Aux_Message( stdout, "  y velocity dispersion      = %13.7e\n", ParStream_SigmaY );
       Aux_Message( stdout, "  z velocity dispersion      = %13.7e\n", ParStream_SigmaZ );
