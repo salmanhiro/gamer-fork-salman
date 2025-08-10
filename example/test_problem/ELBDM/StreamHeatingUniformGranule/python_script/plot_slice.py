@@ -42,6 +42,7 @@ for ds in ts.piter():
    avedens = np.mean(dens)
 
    plt = yt.SlicePlot( ds, 0, fields = field, center = 'c')
+   plt.annotate_particles(1.0, p_size=10)
    plt.set_zlim( field, avedens*1.0e-4, avedens*1.0e+1, dynamic_range=None)
    plt.set_axes_unit( 'kpc' )
    plt.set_unit( field, 'Msun/kpc**3')
@@ -50,6 +51,7 @@ for ds in ts.piter():
    plt.save( mpl_kwargs={"dpi":dpi} )
 
    plt = yt.SlicePlot( ds, 1, fields = field, center = 'c')
+   plt.annotate_particles(1.0, p_size=10)
    plt.set_zlim( field, avedens*1.0e-4, avedens*1.0e+1, dynamic_range=None)
    plt.set_axes_unit( 'kpc' )
    plt.set_unit( field, 'Msun/kpc**3')
@@ -58,6 +60,7 @@ for ds in ts.piter():
    plt.save( mpl_kwargs={"dpi":dpi} )
 
    plt = yt.SlicePlot( ds, 2, fields = field, center = 'c')
+   plt.annotate_particles(1.0, p_size=10)
    plt.set_zlim( field, avedens*1.0e-4, avedens*1.0e+1, dynamic_range=None)
    plt.set_axes_unit( 'kpc' )
    plt.set_unit( field, 'Msun/kpc**3')

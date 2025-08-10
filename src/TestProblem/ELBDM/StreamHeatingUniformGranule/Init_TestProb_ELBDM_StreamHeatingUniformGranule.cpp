@@ -38,8 +38,6 @@ static double ParticleStream_Pres_Bg;        // background pressure
 static double ParticleStream_Ang_Freq;       // gas angular frequency
 
        int    ParticleStream_NStar;           // number of star particle
-       double ParticleStream_Point_Mass;     // the mass of the active particles
-       bool   ParticleStream_Use_Tracers;    // whether or not to include tracers
        bool   ParticleStream_Use_Massive;    // whether or not to include massive particles
        double ParticleStream_SigmaX;          // 1D velocity dispersion of X component in km/s
        double ParticleStream_SigmaY;          // 1D velocity dispersion of Y component in km/s
@@ -64,8 +62,6 @@ void Par_Init_ByFunction_StreamHeatingUniformGranule( const long NPar_ThisRank, 
 
 bool Flag_StreamHeatingUniformGranule( const int i, const int j, const int k, const int lv,
                         const int PID, const double *Threshold );
-
-// TODO: IMPLEMENT INIT PARTICLE
 
 // =======================================================================================
 
@@ -167,16 +163,14 @@ void LoadInputTestProb( const LoadParaMode_t load_mode, ReadPara_t *ReadPara, HD
    LOAD_PARA( load_mode, "ParticleStream_Pres_Bg",     &ParticleStream_Pres_Bg,        1.0e-2,       Eps_double,       NoMax_double      );
    LOAD_PARA( load_mode, "ParticleStream_Ang_Freq",    &ParticleStream_Ang_Freq,       0.00051668,   Eps_double,       1.0e-3            );
    LOAD_PARA( load_mode, "ParticleStream_NStar",       &ParticleStream_NStar,          1000,         1,                100000           );   
-   LOAD_PARA( load_mode, "ParticleStream_Point_Mass",  &ParticleStream_Point_Mass,     1.0,          Eps_double,       NoMax_double      );
-   LOAD_PARA( load_mode, "ParticleStream_Use_Tracers", &ParticleStream_Use_Tracers,    true,         Useless_bool,     Useless_bool      );
    LOAD_PARA( load_mode, "ParticleStream_Use_Massive", &ParticleStream_Use_Massive,    true,         Useless_bool,     Useless_bool      );
    LOAD_PARA( load_mode, "ParticleStream_SigmaX",      &ParticleStream_SigmaX,         1.0,          0.0,       NoMax_double      );
    LOAD_PARA( load_mode, "ParticleStream_SigmaY",      &ParticleStream_SigmaY,         1.0,          0.0,       NoMax_double      );
    LOAD_PARA( load_mode, "ParticleStream_SigmaZ",      &ParticleStream_SigmaZ,         1.0,          0.0,       NoMax_double      );
    LOAD_PARA( load_mode, "ParticleStream_Width",      &ParticleStream_Width,           1.0e-2,       Eps_double,       NoMax_double      );
    LOAD_PARA( load_mode, "ParticleStream_BulkSigmaX",   &ParticleStream_BulkSigmaX,    120.0,        0.0,       NoMax_double      );
-   LOAD_PARA( load_mode, "ParticleStream_BulkSigmaY",   &ParticleStream_BulkSigmaY,    120.0,        0.0,       NoMax_double      );
-   LOAD_PARA( load_mode, "ParticleStream_BulkSigmaZ",   &ParticleStream_BulkSigmaZ,    120.0,        0.0,       NoMax_double      );
+   LOAD_PARA( load_mode, "ParticleStream_BulkSigmaY",   &ParticleStream_BulkSigmaY,    0.0,        0.0,       NoMax_double      );
+   LOAD_PARA( load_mode, "ParticleStream_BulkSigmaZ",   &ParticleStream_BulkSigmaZ,    0.0,        0.0,       NoMax_double      );
    LOAD_PARA( load_mode, "ParticleStream_Mass",        &ParticleStream_Mass,           0.0,          0.0,              NoMax_double      );
 
 
@@ -231,9 +225,16 @@ void SetParameter()
    ReadPara->Add( "ParticleStream_Dens_Bg",   &ParticleStream_Dens_Bg,  Eps_double,    NoMin_double,     NoMax_double      );
    ReadPara->Add( "ParticleStream_Pres_Bg",   &ParticleStream_Pres_Bg,  Eps_double,    NoMin_double,     NoMax_double      );
    ReadPara->Add( "ParticleStream_Ang_Freq",   &ParticleStream_Ang_Freq,Eps_double,    NoMin_double,     NoMax_double      );
-   ReadPara->Add( "ParticleStream_NStar",   &ParticleStream_NStar,      1000,          0,                NoMax_int      );
-   ReadPara->Add( "ParticleStream_Point_Mass",   &ParticleStream_Point_Mass,      1000,          0,                NoMax_int      );
-
+   ReadPara->Add( "ParticleStream_NStar",      &ParticleStream_NStar,      1000,       0,                NoMax_int         );
+   ReadPara->Add( "ParticleStream_Use_Massive",&ParticleStream_Use_Massive, true,      Useless_bool,     Useless_bool      );
+   ReadPara->Add( "ParticleStream_SigmaX",     &ParticleStream_SigmaX,   1.0,          0.0,              NoMax_double      );
+   ReadPara->Add( "ParticleStream_SigmaY",     &ParticleStream_SigmaY,   1.0,          0.0,              NoMax_double      );
+   ReadPara->Add( "ParticleStream_SigmaZ",     &ParticleStream_SigmaZ,   1.0,          0.0,              NoMax_double      );
+   ReadPara->Add( "ParticleStream_Width",     &ParticleStream_Width,   1.0e-2,         Eps_double,       NoMax_double      );
+   ReadPara->Add( "ParticleStream_BulkSigmaX",&ParticleStream_BulkSigmaX, 120.0,          0.0,              NoMax_double      );
+   ReadPara->Add( "ParticleStream_BulkSigmaY",&ParticleStream_BulkSigmaY,   0.0,          0.0,              NoMax_double      );
+   ReadPara->Add( "ParticleStream_BulkSigmaZ",&ParticleStream_BulkSigmaZ,   0.0,          0.0,              NoMax_double      );
+   ReadPara->Add( "ParticleStream_Mass",&ParticleStream_Mass,   0.0,          0.0,              NoMax_double      );
    ReadPara->Read( FileName );
 
    delete ReadPara;
@@ -286,6 +287,12 @@ void SetParameter()
       PRINT_RESET_PARA( END_T, FORMAT_REAL, "" );
    }
 
+// overwrite the total number of particles
+#  ifdef PARTICLE
+   amr->Par->NPar_Active_AllRank = 0;
+   if ( ParticleStream_Use_Massive )    amr->Par->NPar_Active_AllRank += 1000;
+   PRINT_RESET_PARA( amr->Par->NPar_Active_AllRank, FORMAT_LONG, "(PAR_NPAR in Input__Parameter)" );
+#  endif
 
 // (4) make a note
    if ( MPI_Rank == 0 )
@@ -307,13 +314,21 @@ void SetParameter()
          Aux_Message( stdout, "  remove empty bin    (profile, hard-coded)   = %d\n"    , RemoveEmpty_prof       );
          Aux_Message( stdout, "  minimum level                               = %d\n"    , MinLv_corr             );
          Aux_Message( stdout, "  maximum level                               = %d\n"    , MaxLv_corr             );
-         
+         Aux_Message( stdout, "==============================================================================\n" );
          Aux_Message( stdout, "  particle stream density bg                  = %13.7e\n"    , ParticleStream_Dens_Bg );
          Aux_Message( stdout, "  particle stream pressure bg                 = %13.7e\n"    , ParticleStream_Pres_Bg );
          Aux_Message( stdout, "  particle stream angular fq                  = %13.7e\n"    , ParticleStream_Ang_Freq);
          Aux_Message( stdout, "  particle stream angular fq                  = %13.7e\n"    , ParticleStream_Ang_Freq);
          Aux_Message( stdout, "  n star particle                             = %d\n"        , ParticleStream_NStar   );
-         
+         Aux_Message( stdout, "  use massive particle                        = %d\n"        , ParticleStream_Use_Massive   );
+         Aux_Message( stdout, "  x axis vel disp                             = %13.7e\n"        , ParticleStream_SigmaX   );
+         Aux_Message( stdout, "  y axis vel disp                             = %13.7e\n"        , ParticleStream_SigmaY   );
+         Aux_Message( stdout, "  z axis vel disp                             = %13.7e\n"        , ParticleStream_SigmaZ   );
+         Aux_Message( stdout, "  stream width                                = %13.7e\n"        , ParticleStream_Width    );
+         Aux_Message( stdout, "  x axis bulk vel disp                        = %13.7e\n"        , ParticleStream_BulkSigmaX);
+         Aux_Message( stdout, "  y axis bulk vel disp                        = %13.7e\n"        , ParticleStream_BulkSigmaY);
+         Aux_Message( stdout, "  z axis bulk vel disp                        = %13.7e\n"        , ParticleStream_BulkSigmaZ);
+         Aux_Message( stdout, "  stellar particle mass                       = %13.7e\n"        , ParticleStream_Mass     );
          
          Aux_Message( stdout, "  folder for storing correlation text file    = %s\n"    , FilePath_corr          );
          if ( OPT__INIT == INIT_BY_RESTART )
@@ -518,7 +533,7 @@ void Init_TestProb_ELBDM_StreamHeatingUniformGranule()
 #  if ( MODEL == ELBDM )
 // set the problem-specific runtime parameters
    SetParameter();
-   Par_Init_ByFunction_Ptr       = Par_Init_ByFunction_StreamHeatingUniformGranule;
+   Par_Init_ByFunction_Ptr = Par_Init_ByFunction_StreamHeatingUniformGranule;
    Init_Field_User_Ptr = AddNewField_ELBDM_UniformGranule;
    Init_User_Ptr       = Init_User_ELBDM_UniformGranule;
    Aux_Record_User_Ptr = Do_CF;

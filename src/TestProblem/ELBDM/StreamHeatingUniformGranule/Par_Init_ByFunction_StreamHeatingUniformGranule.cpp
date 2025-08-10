@@ -8,15 +8,15 @@
    #include <gsl/gsl_randist.h>
 #endif
 
-extern bool   ParStream_Use_Massive;
-extern double  ParStream_SigmaX;
-extern double  ParStream_SigmaY;
-extern double  ParStream_SigmaZ;
-extern double  ParStream_BulkSigmaX;
-extern double  ParStream_BulkSigmaY;
-extern double  ParStream_BulkSigmaZ;
-extern double  ParStream_Width;
-extern double ParStream_Mass;
+extern bool   ParticleStream_Use_Massive;
+extern double  ParticleStream_SigmaX;
+extern double  ParticleStream_SigmaY;
+extern double  ParticleStream_SigmaZ;
+extern double  ParticleStream_BulkSigmaX;
+extern double  ParticleStream_BulkSigmaY;
+extern double  ParticleStream_BulkSigmaZ;
+extern double  ParticleStream_Width;
+extern double ParticleStream_Mass;
 
 // Simple Gaussian random number generator using Box-Muller transform
 double rand_normal(double mean, double stddev) {
@@ -79,7 +79,7 @@ void Par_Init_ByFunction_StreamHeatingUniformGranule( const long NPar_ThisRank, 
    if ( MPI_Rank == 0 )    Aux_Message( stdout, "%s ...\n", __FUNCTION__ );
 
    srand(314); // or use time(NULL) for non-deterministic
-
+   
 
 // define the particle attribute arrays
    real_par *ParFltData_AllRank[PAR_NATT_FLT_TOTAL];
@@ -102,8 +102,9 @@ void Par_Init_ByFunction_StreamHeatingUniformGranule( const long NPar_ThisRank, 
       ParIntData_AllRank[PAR_TYPE] = new long_par [NPar_AllRank];
 
       long p = 0;
+      
 
-      if ( ParStream_Use_Massive ) {
+      if ( ParticleStream_Use_Massive ) {
 
          const double Stream_Length    = amr->BoxSize[0];  // kpc along X
 
@@ -120,11 +121,10 @@ void Par_Init_ByFunction_StreamHeatingUniformGranule( const long NPar_ThisRank, 
          rng = gsl_rng_alloc(T);
          gsl_rng_set(rng, 314); // fixed seed
          #endif
-
       for (long p = 0; p < NPar_AllRank; p++) {
 
             double x, y, z;
-
+            
             do {
                x = x0 + Stream_Length * (double)p / NPar_AllRank;  // uniform distribution along X
                x += rand_normal(0.0, 0.5);  // small noise around the streamline
@@ -132,21 +132,21 @@ void Par_Init_ByFunction_StreamHeatingUniformGranule( const long NPar_ThisRank, 
             } while ( x < 0.0 || x >= amr->BoxSize[0] );
 
             do {
-               y = rand_normal(y0, 0.5 * ParStream_Width);
+               y = rand_normal(y0, 0.5 * ParticleStream_Width);
             } while ( y < 0.0 || y >= amr->BoxSize[1] );
 
             do {
-               z = rand_normal(z0, 0.5 * ParStream_Width);
+               z = rand_normal(z0, 0.5 * ParticleStream_Width);
             } while ( z < 0.0 || z >= amr->BoxSize[2] );
 
 
          // Velocities
-         const double vx = rand_normal(ParStream_BulkSigmaX, ParStream_SigmaX);
-         const double vy = rand_normal(0.0, ParStream_SigmaY);
-         const double vz = rand_normal(0.0, ParStream_SigmaZ);
+         const double vx = rand_normal(ParticleStream_BulkSigmaX, ParticleStream_SigmaX);
+         const double vy = rand_normal(0.0, ParticleStream_SigmaY);
+         const double vz = rand_normal(0.0, ParticleStream_SigmaZ);
 
          // stream particles are assumed massless
-         ParFltData_AllRank[PAR_MASS][p] = ParStream_Mass;
+         ParFltData_AllRank[PAR_MASS][p] = ParticleStream_Mass;
          ParFltData_AllRank[PAR_POSX][p] = real_par(x);
          ParFltData_AllRank[PAR_POSY][p] = real_par(y);
          ParFltData_AllRank[PAR_POSZ][p] = real_par(z);
@@ -167,6 +167,47 @@ void Par_Init_ByFunction_StreamHeatingUniformGranule( const long NPar_ThisRank, 
 // send particle attributes from the master rank to all ranks
    Par_ScatterParticleData( NPar_ThisRank, NPar_AllRank, _PAR_MASS|_PAR_POS|_PAR_VEL, _PAR_TYPE,
                             ParFltData_AllRank, ParIntData_AllRank, AllAttributeFlt, AllAttributeInt );
+
+
+   {
+    // local stats
+    long_par tmin = (long_par)  1e9;
+    long_par tmax = (long_par) -1e9;
+    long long type_cnt_local[PAR_NTYPE];  for (int t=0;t<PAR_NTYPE;t++) type_cnt_local[t]=0;
+    long long bad_local = 0;
+
+    for (long p=0; p<NPar_ThisRank; ++p) {
+        long_par t = ParType[p];                 // <- this is valid here
+        if (t < tmin) tmin = t;
+        if (t > tmax) tmax = t;
+        if (0 <= t && t < PAR_NTYPE) type_cnt_local[t] ++;
+        else                          bad_local ++;
+    }
+
+    // global reduce
+    long_par tmin_g, tmax_g;
+    MPI_Allreduce(&tmin, &tmin_g, 1, MPI_LONG, MPI_MIN, MPI_COMM_WORLD);
+    MPI_Allreduce(&tmax, &tmax_g, 1, MPI_LONG, MPI_MAX, MPI_COMM_WORLD);
+
+    long long type_cnt_global[PAR_NTYPE];
+    MPI_Allreduce(type_cnt_local, type_cnt_global, PAR_NTYPE, MPI_LONG_LONG, MPI_SUM, MPI_COMM_WORLD);
+
+    long long bad_global = 0;
+    MPI_Allreduce(&bad_local, &bad_global, 1, MPI_LONG_LONG, MPI_SUM, MPI_COMM_WORLD);
+
+    if (MPI_Rank == 0) {
+        Aux_Message(stdout, "[ParType check] min=%ld max=%ld  (0=PTYPE_TRACER)\n",
+                    (long)tmin_g, (long)tmax_g);
+        for (int t=0; t<PAR_NTYPE; ++t)
+            Aux_Message(stdout, "  Type[%d] count = %lld\n", t, type_cnt_global[t]);
+        if (bad_global)
+            Aux_Message(stderr, "WARNING: %lld particles have invalid type indices!\n", bad_global);
+        // peek a few particles from rank 0 for sanity
+        for (int k=0; k< (int)MIN(5, NPar_ThisRank); ++k)
+            Aux_Message(stdout, "  sample p%02d: Type=%ld Mass=%g\n",
+                        k, (long)ParType[k], (double)ParMass[k]);
+    }
+}
 
 // synchronize all particles to the physical time on the base level
    for (long p=0; p<NPar_ThisRank; p++)
