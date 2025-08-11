@@ -5,7 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # ------------------ CLI ------------------
-parser = argparse.ArgumentParser(description='Mass-weighted velocity dispersion components vs time in subplots')
+parser = argparse.ArgumentParser(description='Velocity dispersion components vs time in subplots')
 parser.add_argument('-p', type=str, default='..', dest='prefix', help='path prefix [%(default)s]')
 parser.add_argument('-s', type=int, required=True, dest='idx_start', help='first data index')
 parser.add_argument('-e', type=int, required=True, dest='idx_end', help='last data index')
@@ -26,8 +26,6 @@ ts = yt.DatasetSeries([f"{args.prefix}/Data_{i:06d}" for i in range(args.idx_sta
 # ---- helpers ----
 def weighted_std(v, w):
     wsum = w.sum()
-    if wsum == 0:
-        raise RuntimeError("[ERROR] Mass-weighted dispersion not possible: particles are massless.")
     mean = (w * v).sum() / wsum
     var  = (w * (v - mean)**2).sum() / wsum
     return var**0.5
@@ -72,7 +70,7 @@ if yt.is_root():
     axes[2].set_xlabel('Time [Myr]')
     axes[2].grid(True, alpha=0.3)
 
-    fig.suptitle('Mass-weighted Velocity Dispersion Components vs Time', fontsize=14)
+    fig.suptitle('Number density-weighted Velocity Dispersion Components vs Time', fontsize=14)
     plt.tight_layout(rect=[0, 0, 1, 0.96])
     plt.savefig(args.out, dpi=150)
     print(f"Saved subplot figure to {args.out}")
