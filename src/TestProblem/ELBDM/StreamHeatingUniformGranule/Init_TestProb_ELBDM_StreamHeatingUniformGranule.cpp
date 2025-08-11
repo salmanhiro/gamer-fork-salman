@@ -33,9 +33,6 @@ static double   dr_min_corr;                  // bin size of correlation functio
 static bool     LogBin_corr;                  // logarithmic bin or not (correlation)
 static double   LogBinRatio_corr;             // ratio of adjacent log bins for logarithmic bin (correlation)
 static bool     RemoveEmpty_corr;             // remove bins without any samples; false: Data[empty_bin]=Weight[empty_bin]=NCell[empty_bin]=0 (correlation)
-static double ParticleStream_Dens_Bg;        // background mass density
-static double ParticleStream_Pres_Bg;        // background pressure
-static double ParticleStream_Ang_Freq;       // gas angular frequency
 
        int    ParticleStream_NStar;           // number of star particle
        bool   ParticleStream_Use_Massive;    // whether or not to include massive particles
@@ -159,9 +156,6 @@ void LoadInputTestProb( const LoadParaMode_t load_mode, ReadPara_t *ReadPara, HD
 // **************************************************************************************************************************
 // LOAD_PARA( load_mode, "KEY_IN_THE_FILE",     &VARIABLE,               DEFAULT,      MIN,              MAX               );
 // **************************************************************************************************************************
-   LOAD_PARA( load_mode, "ParticleStream_Dens_Bg",     &ParticleStream_Dens_Bg,        1.0e-2,       Eps_double,       NoMax_double      );
-   LOAD_PARA( load_mode, "ParticleStream_Pres_Bg",     &ParticleStream_Pres_Bg,        1.0e-2,       Eps_double,       NoMax_double      );
-   LOAD_PARA( load_mode, "ParticleStream_Ang_Freq",    &ParticleStream_Ang_Freq,       0.00051668,   Eps_double,       1.0e-3            );
    LOAD_PARA( load_mode, "ParticleStream_NStar",       &ParticleStream_NStar,          1000,         1,                100000           );   
    LOAD_PARA( load_mode, "ParticleStream_Use_Massive", &ParticleStream_Use_Massive,    true,         Useless_bool,     Useless_bool      );
    LOAD_PARA( load_mode, "ParticleStream_SigmaX",      &ParticleStream_SigmaX,         1.0,          0.0,       NoMax_double      );
@@ -222,9 +216,6 @@ void SetParameter()
    ReadPara->Add( "LogBinRatio_corr",         &LogBinRatio_corr,        1.0,           NoMin_double,     NoMax_double      );
    ReadPara->Add( "RemoveEmpty_corr",         &RemoveEmpty_corr,        false,         Useless_bool,     Useless_bool      );
    ReadPara->Add( "dr_min_prof",              &dr_min_prof,             Eps_double,    NoMin_double,     NoMax_double      );
-   ReadPara->Add( "ParticleStream_Dens_Bg",   &ParticleStream_Dens_Bg,  Eps_double,    NoMin_double,     NoMax_double      );
-   ReadPara->Add( "ParticleStream_Pres_Bg",   &ParticleStream_Pres_Bg,  Eps_double,    NoMin_double,     NoMax_double      );
-   ReadPara->Add( "ParticleStream_Ang_Freq",   &ParticleStream_Ang_Freq,Eps_double,    NoMin_double,     NoMax_double      );
    ReadPara->Add( "ParticleStream_NStar",      &ParticleStream_NStar,      1000,       0,                NoMax_int         );
    ReadPara->Add( "ParticleStream_Use_Massive",&ParticleStream_Use_Massive, true,      Useless_bool,     Useless_bool      );
    ReadPara->Add( "ParticleStream_SigmaX",     &ParticleStream_SigmaX,   1.0,          0.0,              NoMax_double      );
@@ -290,7 +281,7 @@ void SetParameter()
 // overwrite the total number of particles
 #  ifdef PARTICLE
    amr->Par->NPar_Active_AllRank = 0;
-   if ( ParticleStream_Use_Massive )    amr->Par->NPar_Active_AllRank += 1000;
+   if ( ParticleStream_Use_Massive )    amr->Par->NPar_Active_AllRank += ParticleStream_NStar;
    PRINT_RESET_PARA( amr->Par->NPar_Active_AllRank, FORMAT_LONG, "(PAR_NPAR in Input__Parameter)" );
 #  endif
 
@@ -315,10 +306,6 @@ void SetParameter()
          Aux_Message( stdout, "  minimum level                               = %d\n"    , MinLv_corr             );
          Aux_Message( stdout, "  maximum level                               = %d\n"    , MaxLv_corr             );
          Aux_Message( stdout, "==============================================================================\n" );
-         Aux_Message( stdout, "  particle stream density bg                  = %13.7e\n"    , ParticleStream_Dens_Bg );
-         Aux_Message( stdout, "  particle stream pressure bg                 = %13.7e\n"    , ParticleStream_Pres_Bg );
-         Aux_Message( stdout, "  particle stream angular fq                  = %13.7e\n"    , ParticleStream_Ang_Freq);
-         Aux_Message( stdout, "  particle stream angular fq                  = %13.7e\n"    , ParticleStream_Ang_Freq);
          Aux_Message( stdout, "  n star particle                             = %d\n"        , ParticleStream_NStar   );
          Aux_Message( stdout, "  use massive particle                        = %d\n"        , ParticleStream_Use_Massive   );
          Aux_Message( stdout, "  x axis vel disp                             = %13.7e\n"        , ParticleStream_SigmaX   );
