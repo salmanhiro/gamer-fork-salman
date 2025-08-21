@@ -16,7 +16,6 @@ static double ParStream_Ang_Freq;       // gas angular frequency
        double ParStream_BulkSigmaX;        // bulk velocity dispersion of X component in km/s
        double ParStream_BulkSigmaY;        // bulk velocity dispersion of Y component in km/s
        double ParStream_BulkSigmaZ;        // bulk velocity dispersion of Z component in km/s
-       double ParStream_Mass;             // stream particle mass (default 0)
 // =======================================================================================
 
 // problem-specific function prototypes
@@ -113,7 +112,6 @@ void LoadInputTestProb( const LoadParaMode_t load_mode, ReadPara_t *ReadPara, HD
    LOAD_PARA( load_mode, "ParStream_Pres_Bg",     &ParStream_Pres_Bg,        1.0e-2,       Eps_double,       NoMax_double      );
    LOAD_PARA( load_mode, "ParStream_Ang_Freq",    &ParStream_Ang_Freq,       0.00051668,   Eps_double,       1.0e-3            );
    LOAD_PARA( load_mode, "ParStream_NStar",       &ParStream_NStar,          1000,         1,                100000           );   
-   LOAD_PARA( load_mode, "ParStream_Point_Mass",  &ParStream_Point_Mass,     1.0,          Eps_double,       NoMax_double      );
    LOAD_PARA( load_mode, "ParStream_Use_Massive", &ParStream_Use_Massive,    true,         Useless_bool,     Useless_bool      );
    LOAD_PARA( load_mode, "ParStream_SigmaX",      &ParStream_SigmaX,         1.0,          0.0,       NoMax_double      );
    LOAD_PARA( load_mode, "ParStream_SigmaY",      &ParStream_SigmaY,         1.0,          0.0,       NoMax_double      );
@@ -122,7 +120,6 @@ void LoadInputTestProb( const LoadParaMode_t load_mode, ReadPara_t *ReadPara, HD
    LOAD_PARA( load_mode, "ParStream_BulkSigmaX",   &ParStream_BulkSigmaX,    120.0,        0.0,       NoMax_double      );
    LOAD_PARA( load_mode, "ParStream_BulkSigmaY",   &ParStream_BulkSigmaY,    120.0,        0.0,       NoMax_double      );
    LOAD_PARA( load_mode, "ParStream_BulkSigmaZ",   &ParStream_BulkSigmaZ,    120.0,        0.0,       NoMax_double      );
-   LOAD_PARA( load_mode, "ParStream_Mass",        &ParStream_Mass,           0.0,          0.0,              NoMax_double      );
 
 
 } // FUNCITON : LoadInputTestProb
@@ -204,7 +201,6 @@ void SetParameter()
       Aux_Message( stdout, "  background mass density    = %13.7e\n", ParStream_Dens_Bg     );
       Aux_Message( stdout, "  background pressure        = %13.7e\n", ParStream_Pres_Bg     );
       Aux_Message( stdout, "  angular frequency          = %13.7e\n", ParStream_Ang_Freq    );
-      Aux_Message( stdout, "  active particle mass       = %13.7e\n", ParStream_Point_Mass  );
       Aux_Message( stdout, "  x velocity dispersion      = %13.7e\n", ParStream_SigmaX );
       Aux_Message( stdout, "  y velocity dispersion      = %13.7e\n", ParStream_SigmaY );
       Aux_Message( stdout, "  z velocity dispersion      = %13.7e\n", ParStream_SigmaZ );
@@ -212,7 +208,6 @@ void SetParameter()
       Aux_Message( stdout, "  y bulk velocity dispersion = %13.7e\n", ParStream_BulkSigmaY );
       Aux_Message( stdout, "  z bulk velocity dispersion = %13.7e\n", ParStream_BulkSigmaZ );
       Aux_Message( stdout, "  stellar stream width       = %d\n",     ParStream_Width );
-      Aux_Message( stdout, "  stellar particle mass      = %d\n",     ParStream_Mass );
       Aux_Message( stdout, "=============================================================================\n" );
    }
 
